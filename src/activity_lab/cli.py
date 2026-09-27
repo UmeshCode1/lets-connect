@@ -34,14 +34,14 @@ def cmd_stats(args: argparse.Namespace) -> int:
     print("-" * 60)
     print("Contributors breakdown:")
     for email, contributor in sorted(stats.contributors.items(), key=lambda x: x[1].total_contributions, reverse=True):
-        print(f" • {contributor.name} <{contributor.email}>: "
+        print(f" * {contributor.name} <{contributor.email}>: "
               f"{contributor.primary_commits} author commits, "
               f"{contributor.co_authored_commits} co-authored")
     print("-" * 60)
     if stats.trailers_distribution:
         print("Git trailers found:")
         for trailer, count in sorted(stats.trailers_distribution.items()):
-            print(f" • {trailer}: {count}")
+            print(f" * {trailer}: {count}")
     print("=" * 60)
     return 0
 
@@ -163,16 +163,16 @@ def cmd_review_stats(args: argparse.Namespace) -> int:
     print(f" Pull Request Code Review Participation{header_user}")
     print("=" * 65)
     print(f"Total Reviews Submitted:       {summary.total_reviews}")
-    print(f" • Approved:                   {summary.approved}")
-    print(f" • Changes Requested:          {summary.changes_requested}")
-    print(f" • Comments:                   {summary.commented}")
-    print(f" • Dismissed:                  {summary.dismissed}")
+    print(f" * Approved:                   {summary.approved}")
+    print(f" * Changes Requested:          {summary.changes_requested}")
+    print(f" * Comments:                   {summary.commented}")
+    print(f" * Dismissed:                  {summary.dismissed}")
     print(f"Approval Rate:                 {summary.approval_rate}%")
     print("-" * 65)
     if summary.reviews_by_user:
         print("Reviewers breakdown:")
         for reviewer, counts in sorted(summary.reviews_by_user.items()):
-            print(f" • {reviewer}: {counts['APPROVED']} approved, "
+            print(f" * {reviewer}: {counts['APPROVED']} approved, "
                   f"{counts['CHANGES_REQUESTED']} changes requested, "
                   f"{counts['COMMENTED']} comments")
     else:
