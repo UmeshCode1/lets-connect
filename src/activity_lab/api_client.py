@@ -43,8 +43,17 @@ class GitHubApiClient:
         res = self._request(url)
         return res if isinstance(res, list) else []
 
-    def _request(self, url: str) -> Any:
-        req = urllib.request.Request(url, headers=self._get_headers())
+    def get_stargazers_with_timestamps(self, owner: str, repo: str) -> list[dict[str, Any]]:
+        """Fetch stargazers with timestamp metadata (starred_at)."""
+        url = f"{self.BASE_URL}/repos/{owner}/{repo}/stargazers?per_page=100"
+        headers = self._get_headers()
+        headers["Accept"] = "application/vnd.github.star+json"
+        res = self._request(url, custom_headers=headers)
+        return res if isinstance(res, list) else []
+
+    def _request(self, url: str, custom_headers: Optional[dict[str, str]] = None) -> Any:
+        headers = custom_headers if custom_headers is not None else self._get_headers()
+        req = urllib.request.Request(url, headers=headers)
         try:
             with urllib.request.urlopen(req) as resp:
                 content = resp.read().decode("utf-8")
