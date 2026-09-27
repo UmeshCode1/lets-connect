@@ -7,9 +7,13 @@ import json
 import sys
 from typing import List, Optional
 
+from datetime import datetime, timezone
+
+from activity_lab.api_client import GitHubApiClient
 from activity_lab.milestones import ACHIEVEMENT_REGISTRY, Tier
 from activity_lab.parser import CoAuthor, read_git_history
 from activity_lab.stats import calculate_stats
+from activity_lab.velocity import calculate_star_velocity
 
 
 def cmd_stats(args: argparse.Namespace) -> int:
@@ -93,6 +97,47 @@ def cmd_format_coauthor(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_star_velocity(args: argparse.Namespace) -> int:
+    """Analyze stargazer acquisition rate and Starstruck milestone projection."""
+    client = GitHubApiClient(token=args.token)
+    stargazers = client.get_stargazers_with_timestamps(owner=args.owner, repo=args.repo)
+    if isinstance(stargazers, dict) and "error" in stargazers:
+        print(f"Error fetching stargazers: {stargazers['error']}")
+        return 1
+
+    timestamps = []
+    for s in stargazers:
+        sa = s.get("starred_at")
+        if sa:
+            try:
+                # Format: 2026-09-27T20:36:00Z
+                dt = datetime.fromisoformat(sa.replace("Z", "+00:00"))
+                timestamps.append(dt)
+            except ValueError:
+                pass
+
+    report = calculate_star_velocity(timestamps)
+    print("=" * 65)
+    print(f" Starstruck Velocity Analysis - {args.owner}/{args.repo}")
+    print("=" * 65)
+    print(f"Total Stargazers:              {report.total_stars}")
+    print(f"7-Day Rolling Velocity:        {report.daily_velocity_7d} stars/day")
+    print(f"30-Day Rolling Velocity:       {report.daily_velocity_30d} stars/day")
+    print(f"Weekly Momentum:               {report.weekly_momentum_pct:+.1f}%")
+    current_tier_str = report.current_tier.value if report.current_tier else "None"
+    print(f"Current Tier:                  {current_tier_str}")
+    if report.next_tier:
+        print(f"Next Target Tier:              {report.next_tier.value} ({report.stars_needed_for_next_tier} stars needed)")
+        if report.projected_date_next_tier:
+            print(f"Projected Milestone Date:      {report.projected_date_next_tier} (~{report.projected_days_to_next_tier} days)")
+        else:
+            print("Projected Milestone Date:      Insufficient recent velocity to project")
+    else:
+        print("Status:                        Maximum Starstruck tier reached!")
+    print("=" * 65)
+    return 0
+
+
 def main(argv: Optional[list[str]] = None) -> int:
     """CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -122,6 +167,13 @@ def main(argv: Optional[list[str]] = None) -> int:
     p_coauthor.add_argument("--name", required=True, help="Collaborator's full name or GitHub display name")
     p_coauthor.add_argument("--email", required=True, help="Collaborator's verified GitHub email")
     p_coauthor.set_defaults(func=cmd_format_coauthor)
+
+    # star-velocity
+    p_velocity = subparsers.add_parser("star-velocity", help="Analyze stargazer velocity and milestone projections")
+    p_velocity.add_argument("--owner", required=True, help="GitHub repository owner")
+    p_velocity.add_argument("--repo", required=True, help="GitHub repository name")
+    p_velocity.add_argument("--token", default=None, help="GitHub personal access token (optional)")
+    p_velocity.set_defaults(func=cmd_star_velocity)
 
     parsed = parser.parse_args(argv)
     return parsed.func(parsed)
