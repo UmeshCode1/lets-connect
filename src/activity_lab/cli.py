@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from activity_lab.api_client import GitHubApiClient
 from activity_lab.milestones import ACHIEVEMENT_REGISTRY, Tier
 from activity_lab.parser import CoAuthor, read_git_history
+from activity_lab.reviews import aggregate_reviews
 from activity_lab.stats import calculate_stats
 from activity_lab.velocity import calculate_star_velocity
 
@@ -138,6 +139,48 @@ def cmd_star_velocity(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_review_stats(args: argparse.Namespace) -> int:
+    """Analyze code review participation across repository pull requests."""
+    client = GitHubApiClient(token=args.token)
+    pulls = client.get_pull_requests(owner=args.owner, repo=args.repo, state="all")
+    if isinstance(pulls, dict) and "error" in pulls:
+        print(f"Error fetching pull requests: {pulls['error']}")
+        return 1
+
+    limit = min(args.limit, len(pulls))
+    all_reviews = []
+    print(f"Scanning reviews across {limit} pull requests in {args.owner}/{args.repo}...")
+    for pr in pulls[:limit]:
+        pr_number = pr.get("number")
+        if pr_number:
+            revs = client.get_pull_request_reviews(owner=args.owner, repo=args.repo, pull_number=pr_number)
+            if isinstance(revs, list):
+                all_reviews.extend(revs)
+
+    summary = aggregate_reviews(all_reviews, target_user=args.user)
+    print("=" * 65)
+    header_user = f" (User: {args.user})" if args.user else ""
+    print(f" Pull Request Code Review Participation{header_user}")
+    print("=" * 65)
+    print(f"Total Reviews Submitted:       {summary.total_reviews}")
+    print(f" • Approved:                   {summary.approved}")
+    print(f" • Changes Requested:          {summary.changes_requested}")
+    print(f" • Comments:                   {summary.commented}")
+    print(f" • Dismissed:                  {summary.dismissed}")
+    print(f"Approval Rate:                 {summary.approval_rate}%")
+    print("-" * 65)
+    if summary.reviews_by_user:
+        print("Reviewers breakdown:")
+        for reviewer, counts in sorted(summary.reviews_by_user.items()):
+            print(f" • {reviewer}: {counts['APPROVED']} approved, "
+                  f"{counts['CHANGES_REQUESTED']} changes requested, "
+                  f"{counts['COMMENTED']} comments")
+    else:
+        print("No matching reviews recorded.")
+    print("=" * 65)
+    return 0
+
+
 def main(argv: Optional[list[str]] = None) -> int:
     """CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -174,6 +217,15 @@ def main(argv: Optional[list[str]] = None) -> int:
     p_velocity.add_argument("--repo", required=True, help="GitHub repository name")
     p_velocity.add_argument("--token", default=None, help="GitHub personal access token (optional)")
     p_velocity.set_defaults(func=cmd_star_velocity)
+
+    # review-stats
+    p_reviews = subparsers.add_parser("review-stats", help="Track pull request code review participation")
+    p_reviews.add_argument("--owner", required=True, help="GitHub repository owner")
+    p_reviews.add_argument("--repo", required=True, help="GitHub repository name")
+    p_reviews.add_argument("--user", default=None, help="Filter reviews by GitHub username")
+    p_reviews.add_argument("--limit", type=int, default=50, help="Maximum PRs to inspect (default: 50)")
+    p_reviews.add_argument("--token", default=None, help="GitHub personal access token (optional)")
+    p_reviews.set_defaults(func=cmd_review_stats)
 
     parsed = parser.parse_args(argv)
     return parsed.func(parsed)

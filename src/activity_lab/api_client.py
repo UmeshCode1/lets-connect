@@ -37,6 +37,12 @@ class GitHubApiClient:
         res = self._request(url)
         return res if isinstance(res, list) else []
 
+    def get_pull_request_reviews(self, owner: str, repo: str, pull_number: int) -> list[dict[str, Any]]:
+        """Fetch reviews submitted for a specific pull request."""
+        url = f"{self.BASE_URL}/repos/{owner}/{repo}/pulls/{pull_number}/reviews?per_page=100"
+        res = self._request(url)
+        return res if isinstance(res, list) else []
+
     def get_stargazers(self, owner: str, repo: str) -> list[dict[str, Any]]:
         """Fetch stargazers for a repository."""
         url = f"{self.BASE_URL}/repos/{owner}/{repo}/stargazers?per_page=100"
