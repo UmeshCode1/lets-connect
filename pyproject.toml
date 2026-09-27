@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "github-activity-lab"
+version = "0.1.0"
+authors = [
+  { name="Umesh Patel", email="umesh.code1@gmail.com" },
+]
+description = "A lightweight utility suite and laboratory for tracking, parsing, and verifying GitHub repository contributions and achievement milestones."
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Version Control :: Git",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/UmeshCode1/bages-"
+"Bug Tracker" = "https://github.com/UmeshCode1/bages-/issues"
+
+[project.scripts]
+activity-lab = "activity_lab.cli:main"
