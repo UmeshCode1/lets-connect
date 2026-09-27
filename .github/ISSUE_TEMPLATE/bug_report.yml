@@ -1,0 +1,37 @@
+name: Bug Report
+description: Create a report to help us improve activity-lab
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug in `github-activity-lab`!
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Run 'activity-lab stats --repo ...'
+        2. Notice error ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Info
+      description: OS version, Python version, Git version.
+      placeholder: |
+        - OS: Windows 11 / Ubuntu 22.04
+        - Python version: 3.14
+        - Git version: 2.55
+    validations:
+      required: true
