@@ -49,8 +49,14 @@ class CommitMetadata:
 
 
 def parse_commit_message(raw_message: str, sha: str = "", author_name: str = "", author_email: str = "") -> CommitMetadata:
-    """Parse a commit message string and extract subject, body, trailers, and co-authors."""
-    raw_message = raw_message.strip()
+    """Parse a commit message string and extract subject, body, trailers, and co-authors.
+
+    Normalizes Windows-style CRLF (\\r\\n) line endings to LF before parsing
+    so that commits authored on Windows machines are handled correctly.
+    Fixes: https://github.com/UmeshCode1/lets-connect/issues/11
+    """
+    # Normalize CRLF -> LF to handle Windows git line endings
+    raw_message = raw_message.replace("\r\n", "\n").replace("\r", "\n").strip()
     if not raw_message:
         return CommitMetadata(sha=sha, author_name=author_name, author_email=author_email, subject="", body="")
 

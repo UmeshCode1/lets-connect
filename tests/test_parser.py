@@ -52,6 +52,15 @@ class TestParser(unittest.TestCase):
         self.assertEqual(meta.body, "")
         self.assertFalse(meta.has_co_authors)
 
+    def test_crlf_line_endings(self):
+        """Regression test: Windows CRLF line endings must not break trailer detection."""
+        msg = "fix: resolve auth edge case\r\n\r\nHandle OAuth token refresh on expiry.\r\n\r\nCo-authored-by: Sam Windows <sam@example.com>"
+        meta = parse_commit_message(msg)
+        self.assertEqual(meta.subject, "fix: resolve auth edge case")
+        self.assertTrue(meta.has_co_authors)
+        self.assertEqual(meta.co_authors[0].name, "Sam Windows")
+        self.assertEqual(meta.co_authors[0].email, "sam@example.com")
+
 
 if __name__ == "__main__":
     unittest.main()
