@@ -1,0 +1,13 @@
+# Ignore external vendor repositories and dependencies from markdown linting
+public-apis/**
+Nixxzzzzz/**
+Nixxzzzzz_repo/**
+github-docs/**
+government.github.com/**
+api-guidelines/**
+UmeshCode1/**
+claude-studio/**
+node_modules/**
+.venv/**
+dist/**
+build/**
