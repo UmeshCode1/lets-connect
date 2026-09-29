@@ -27,13 +27,14 @@ inputs:
     required: false
     default: 'false'
   pr-title:
-    description: 'Pull request title (typically ${{ github.event.pull_request.title }})'
+    description: 'Pull request title (e.g. from pull_request event context)'
     required: false
     default: ''
   pr-body:
-    description: 'Pull request description (typically ${{ github.event.pull_request.body }})'
+    description: 'Pull request description (e.g. from pull_request event context)'
     required: false
     default: ''
+
   anthropic-api-key:
     description: 'Optional Anthropic API Key for Claude AI reviews'
     required: false
