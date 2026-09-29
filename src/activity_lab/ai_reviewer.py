@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import urllib.request
 import urllib.error
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any
+
 
 from activity_lab.coauthor_checker import validate_coauthor_string
 from activity_lab.commit_linter import validate_commit_message
@@ -172,27 +174,36 @@ def call_anthropic_api(
 def call_claude_cli(prompt: str) -> Optional[str]:
     """Invoke the local Claude ant CLI if installed and authenticated."""
     try:
-        # Check if ant.exe or claude is available
+        # Find ant binary securely without relying on shell invocation
+        ant_bin = shutil.which("ant") or shutil.which("ant.exe")
+        if not ant_bin:
+            default_path = r"C:\Users\MSI\go\bin\ant.exe"
+            if os.path.isfile(default_path):
+                ant_bin = default_path
+            else:
+                return None
+
         res = subprocess.run(
-            ["ant", "--version"],
+            [ant_bin, "--version"],
             capture_output=True,
             text=True,
             timeout=5,
-            shell=True,
+            shell=False,
         )
         if res.returncode == 0:
             run_cmd = subprocess.run(
-                ["ant", "-p", prompt],
+                [ant_bin, "-p", prompt],
                 capture_output=True,
                 text=True,
                 timeout=30,
-                shell=True,
+                shell=False,
             )
             if run_cmd.returncode == 0 and run_cmd.stdout.strip():
                 return run_cmd.stdout.strip()
     except Exception:
         pass
     return None
+
 
 
 def review_pull_request(

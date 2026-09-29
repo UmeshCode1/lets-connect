@@ -61,8 +61,9 @@ class GitHubApiClient:
         headers = custom_headers if custom_headers is not None else self._get_headers()
         req = urllib.request.Request(url, headers=headers)
         try:
-            with urllib.request.urlopen(req) as resp:
+            with urllib.request.urlopen(req, timeout=20) as resp:
                 content = resp.read().decode("utf-8")
+
                 return json.loads(content)
         except urllib.error.HTTPError as e:
             return {"error": str(e), "code": e.code}
