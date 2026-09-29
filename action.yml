@@ -1,6 +1,7 @@
 name: 'GitHub Activity Lab & Contribution Milestone Tracker'
 author: 'UmeshCode1'
-description: 'Audit repository contributors, validate RFC Co-authored-by git trailers, track achievement milestones, and generate rich PR summaries.'
+description: 'Audit contributors, validate Co-authored-by git trailers, track achievement milestones, and generate PR summaries.'
+
 branding:
   icon: 'award'
   color: 'green'
