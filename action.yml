@@ -1,0 +1,103 @@
+name: 'GitHub Activity Lab & Contribution Milestone Tracker'
+author: 'UmeshCode1'
+description: 'Audit repository contributors, validate RFC Co-authored-by git trailers, track achievement milestones, and generate rich PR summaries.'
+branding:
+  icon: 'award'
+  color: 'green'
+
+inputs:
+  repo-path:
+    description: 'Path to git repository root'
+    required: false
+    default: '.'
+  limit:
+    description: 'Maximum number of recent commits to analyze'
+    required: false
+    default: '50'
+  enforce-coauthors:
+    description: 'Fail CI step if no co-authored commits are found'
+    required: false
+    default: 'false'
+  enforce-conventional:
+    description: 'Fail CI step if commit titles violate Conventional Commits specifications'
+    required: false
+    default: 'false'
+  ai-review:
+    description: 'Enable Claude AI assisted review and summary generation'
+    required: false
+    default: 'false'
+  pr-title:
+    description: 'Pull request title (typically ${{ github.event.pull_request.title }})'
+    required: false
+    default: ''
+  pr-body:
+    description: 'Pull request description (typically ${{ github.event.pull_request.body }})'
+    required: false
+    default: ''
+  anthropic-api-key:
+    description: 'Optional Anthropic API Key for Claude AI reviews'
+    required: false
+    default: ''
+
+outputs:
+  total-commits:
+    description: 'Total commits analyzed'
+    value: ${{ steps.run-activity-lab.outputs.total-commits }}
+  co-authored-commits:
+    description: 'Number of commits containing valid co-authors'
+    value: ${{ steps.run-activity-lab.outputs.co-authored-commits }}
+  contributors-count:
+    description: 'Number of distinct contributors detected'
+    value: ${{ steps.run-activity-lab.outputs.contributors-count }}
+  co-authored-percentage:
+    description: 'Percentage of commits with co-authors'
+    value: ${{ steps.run-activity-lab.outputs.co-authored-percentage }}
+  compliance-status:
+    description: 'Audit status: success or failure'
+    value: ${{ steps.run-activity-lab.outputs.compliance-status }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Run Activity Lab Contribution Audit
+      id: run-activity-lab
+      shell: bash
+      env:
+        PYTHONPATH: '${{ github.action_path }}/src:${{ env.PYTHONPATH }}'
+        INPUT_REPO: '${{ inputs.repo-path }}'
+        INPUT_LIMIT: '${{ inputs.limit }}'
+        INPUT_ENFORCE_COAUTHORS: '${{ inputs.enforce-coauthors }}'
+        INPUT_ENFORCE_CONVENTIONAL: '${{ inputs.enforce-conventional }}'
+        INPUT_AI_REVIEW: '${{ inputs.ai-review }}'
+        INPUT_PR_TITLE: '${{ inputs.pr-title }}'
+        INPUT_PR_BODY: '${{ inputs.pr-body }}'
+        ANTHROPIC_API_KEY: '${{ inputs.anthropic-api-key }}'
+      run: |
+        ARGS=(--repo "$INPUT_REPO" --limit "$INPUT_LIMIT")
+
+        if [ "$INPUT_ENFORCE_COAUTHORS" = "true" ]; then
+          ARGS+=(--enforce-coauthors)
+        fi
+
+        if [ "$INPUT_ENFORCE_CONVENTIONAL" = "true" ]; then
+          ARGS+=(--enforce-conventional)
+        fi
+
+        if [ "$INPUT_AI_REVIEW" = "true" ]; then
+          ARGS+=(--ai-review)
+        fi
+
+        if [ -n "$INPUT_PR_TITLE" ]; then
+          ARGS+=(--pr-title "$INPUT_PR_TITLE")
+        fi
+
+        if [ -n "$INPUT_PR_BODY" ]; then
+          ARGS+=(--pr-body "$INPUT_PR_BODY")
+        fi
+
+        python -m activity_lab.action_runner "${ARGS[@]}"

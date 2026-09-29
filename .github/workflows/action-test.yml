@@ -1,0 +1,39 @@
+name: Action Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-action:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Activity Lab Action (Self-Test)
+        id: test-activity-lab
+        uses: ./
+        with:
+          repo-path: '.'
+          limit: '25'
+          enforce-coauthors: 'false'
+          enforce-conventional: 'false'
+          ai-review: 'true'
+          pr-title: 'ci(action): test activity-lab composite action execution'
+          pr-body: 'Automated CI test verifying step summary and output parameters.'
+
+      - name: Verify Action Outputs
+        run: |
+          echo "Total Commits: ${{ steps.test-activity-lab.outputs.total-commits }}"
+          echo "Co-authored Commits: ${{ steps.test-activity-lab.outputs.co-authored-commits }}"
+          echo "Contributors Count: ${{ steps.test-activity-lab.outputs.contributors-count }}"
+          echo "Compliance Status: ${{ steps.test-activity-lab.outputs.compliance-status }}"
+          if [ -z "${{ steps.test-activity-lab.outputs.total-commits }}" ]; then
+            echo "Error: Output total-commits is empty!"
+            exit 1
+          fi

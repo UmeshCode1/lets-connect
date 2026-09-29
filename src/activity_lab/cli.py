@@ -9,12 +9,26 @@ from typing import List, Optional
 
 from datetime import datetime, timezone
 
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+from activity_lab.action_runner import evaluate_action
+from activity_lab.ai_reviewer import review_pull_request
 from activity_lab.api_client import GitHubApiClient
 from activity_lab.milestones import ACHIEVEMENT_REGISTRY, Tier
 from activity_lab.parser import CoAuthor, read_git_history
 from activity_lab.reviews import aggregate_reviews
 from activity_lab.stats import calculate_stats
 from activity_lab.velocity import calculate_star_velocity
+
 
 
 def cmd_stats(args: argparse.Namespace) -> int:
@@ -181,6 +195,36 @@ def cmd_review_stats(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_run_action(args: argparse.Namespace) -> int:
+    """Run GitHub Actions contribution audit and output markdown summary."""
+    exit_code, summary_md, _ = evaluate_action(
+        repo_path=args.repo,
+        limit=args.limit,
+        enforce_coauthors=args.enforce_coauthors,
+        enforce_conventional=args.enforce_conventional,
+        ai_review=args.ai_review,
+        pr_title=args.pr_title,
+        pr_body=args.pr_body,
+        api_key=args.api_key,
+    )
+    print(summary_md)
+    return exit_code
+
+
+def cmd_ai_review(args: argparse.Namespace) -> int:
+    """Run Claude AI assisted PR and contribution review."""
+    result = review_pull_request(
+        title=args.title,
+        body=args.body,
+        diff=args.diff,
+        api_key=args.api_key,
+        use_cli=args.use_cli,
+        model=args.model,
+    )
+    print(result.to_markdown())
+    return 0
+
+
 def main(argv: Optional[list[str]] = None) -> int:
     """CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -227,9 +271,32 @@ def main(argv: Optional[list[str]] = None) -> int:
     p_reviews.add_argument("--token", default=None, help="GitHub personal access token (optional)")
     p_reviews.set_defaults(func=cmd_review_stats)
 
+    # run-action
+    p_action = subparsers.add_parser("run-action", help="Execute CI/CD contribution and milestone audit")
+    p_action.add_argument("--repo", default=".", help="Repository path")
+    p_action.add_argument("--limit", type=int, default=50, help="Max commits to analyze")
+    p_action.add_argument("--enforce-coauthors", action="store_true", help="Fail if no co-authors")
+    p_action.add_argument("--enforce-conventional", action="store_true", help="Fail if conventional commits violated")
+    p_action.add_argument("--ai-review", action="store_true", help="Enable Claude AI PR reviewer")
+    p_action.add_argument("--pr-title", default="", help="Pull request title")
+    p_action.add_argument("--pr-body", default="", help="Pull request description")
+    p_action.add_argument("--api-key", default=None, help="Anthropic API Key")
+    p_action.set_defaults(func=cmd_run_action)
+
+    # ai-review
+    p_ai = subparsers.add_parser("ai-review", help="Run Claude AI pull request code review")
+    p_ai.add_argument("--title", required=True, help="Pull request title")
+    p_ai.add_argument("--body", default="", help="Pull request description")
+    p_ai.add_argument("--diff", default="", help="Diff or patch string")
+    p_ai.add_argument("--api-key", default=None, help="Anthropic API key")
+    p_ai.add_argument("--use-cli", action="store_true", help="Invoke local Claude ant CLI")
+    p_ai.add_argument("--model", default="claude-3-7-sonnet-20250219", help="Claude model name")
+    p_ai.set_defaults(func=cmd_ai_review)
+
     parsed = parser.parse_args(argv)
     return parsed.func(parsed)
 
 
 if __name__ == "__main__":
     sys.exit(main())
+

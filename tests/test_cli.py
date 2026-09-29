@@ -23,6 +23,21 @@ class TestCLI(unittest.TestCase):
         output = mock_stdout.getvalue()
         self.assertIn("Co-authored-by: Ada Lovelace <ada@example.com>", output)
 
+    @patch("sys.stdout", new_callable=io.StringIO)
+    def test_cli_run_action(self, mock_stdout):
+        exit_code = main(["run-action", "--repo", ".", "--limit", "5"])
+        self.assertEqual(exit_code, 0)
+        output = mock_stdout.getvalue()
+        self.assertIn("Contribution Analytics", output)
+
+    @patch("sys.stdout", new_callable=io.StringIO)
+    def test_cli_ai_review(self, mock_stdout):
+        exit_code = main(["ai-review", "--title", "feat: implement test feature"])
+        self.assertEqual(exit_code, 0)
+        output = mock_stdout.getvalue()
+        self.assertIn("AI PR Review", output)
+
 
 if __name__ == "__main__":
     unittest.main()
+
