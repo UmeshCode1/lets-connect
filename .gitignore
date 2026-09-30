@@ -77,4 +77,18 @@ Thumbs.db
 .claude/
 .gemini/
 claude-studio/
+.serena/
+.agents/
+.playwright-mcp/
+
+# Sub-repositories and cloned organizations
+AIMLCLUBOCT/
+UmeshCode1/
+Nixxzzzzz/
+Nixxzzzzz_repo/
+api-guidelines/
+github-docs/
+government.github.com/
+public-apis/
+
 
