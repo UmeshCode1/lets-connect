@@ -96,3 +96,5 @@ public-apis/
 # Instagram marketing creatives
 instagram_carousel/
 instagram_welcome_carousel/
+*.mp4
+build_orientation_video.py
