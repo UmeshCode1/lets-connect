@@ -213,7 +213,7 @@ The project is listed on the [XERJ Corpus Hub contributor page](https://hub.xerj
 
 ## Contributing
 
-Contributions, bug reports, and feature requests are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md), follow the [Code of Conduct](CODE_OF_CONDUCT.md), and include tests for code changes where practical.
+Contributions, bug reports, and feature requests are welcome. Start with the [contributor guide](CONTRIBUTING.md) and [project roadmap](docs/ROADMAP.md). New contributors can begin with [issue #94: add deterministic GitHub API client tests](https://github.com/UmeshCode1/lets-connect/issues/94). Please follow the [Code of Conduct](CODE_OF_CONDUCT.md) and include tests for code changes where practical.
 
 ## License
 
