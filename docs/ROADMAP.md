@@ -41,4 +41,8 @@ Open an issue using the feature-request template. Explain the user problem, curr
 
 ## Current contribution entry points
 
-See [open issues](https://github.com/UmeshCode1/lets-connect/issues) and [CONTRIBUTING.md](../CONTRIBUTING.md). If you are looking for a first task and no issue is marked **good first issue**, ask the maintainer to help scope one before writing code.
+- **Good first issue:** [Add deterministic unit tests for GitHubApiClient (#94)](https://github.com/UmeshCode1/lets-connect/issues/94). This is a focused, no-network testing task.
+- **Enhancement:** [Add explicit pagination for GitHub collection endpoints (#95)](https://github.com/UmeshCode1/lets-connect/issues/95). This is a broader API-client improvement.
+- Browse [all open issues](https://github.com/UmeshCode1/lets-connect/issues) and read [CONTRIBUTING.md](../CONTRIBUTING.md) before starting.
+
+If you are new to the project, issue #94 is the recommended first contribution. Comment on the issue before starting so maintainers can coordinate work and answer questions.
