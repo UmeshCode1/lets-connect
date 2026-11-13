@@ -151,10 +151,9 @@ Example of supplying the API key safely through a GitHub Actions secret:
 ```yaml
       - name: Run GitHub Activity Lab
         uses: UmeshCode1/lets-connect@v1
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         with:
           ai-review: "true"
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
           pr-title: ${{ github.event.pull_request.title }}
           pr-body: ${{ github.event.pull_request.body }}
 ```
