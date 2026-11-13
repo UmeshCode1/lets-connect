@@ -1,30 +1,116 @@
-# GitHub Activity Lab & Contribution Tracker
+# GitHub Activity Lab
 
 [![CI](https://github.com/UmeshCode1/lets-connect/actions/workflows/ci.yml/badge.svg)](https://github.com/UmeshCode1/lets-connect/actions/workflows/ci.yml)
 [![Action Test](https://github.com/UmeshCode1/lets-connect/actions/workflows/action-test.yml/badge.svg)](https://github.com/UmeshCode1/lets-connect/actions/workflows/action-test.yml)
-[![GitHub Marketplace](https://img.shields.io/badge/Marketplace-Activity--Lab-blue?logo=github-actions&logoColor=white)](https://github.com/marketplace/actions/github-activity-lab-contribution-milestone-tracker)
-[![GitHub Developer Program](https://img.shields.io/badge/GitHub-Developer%20Program%20Member-00ff88?logo=github&logoColor=black)](https://github.com/UmeshCode1)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python: 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/)
+[![Marketplace](https://img.shields.io/badge/GitHub%20Marketplace-Activity%20Lab-181717?logo=github)](https://github.com/marketplace/actions/github-activity-lab-contribution-milestone-tracker)
+[![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**GitHub Activity Lab** is a production-grade GitHub Marketplace Action and CLI suite designed to audit repository contributors, validate RFC-compliant Git trailers (`Co-authored-by`), lint Conventional Commits, track achievement milestones, and generate intelligent Claude AI pull request reviews.
+**GitHub Activity Lab** is an open-source Python toolkit, command-line interface (CLI), and GitHub Actions composite action for inspecting Git contribution metadata and repository activity. It includes co-author trailer parsing, contributor statistics, commit-message checks, milestone references, pull-request review analytics, and optional Claude-assisted PR summaries.
 
----
+> The project reports repository-local or API-derived signals. It does not verify GitHub achievement eligibility, replace human code review, or guarantee that a contribution will qualify for an achievement.
 
-## ⚡ GitHub Actions Setup
+## What it does
 
-Integrate Activity Lab into your CI/CD pipeline with a single step. It automatically computes repository metrics and publishes an interactive Markdown dashboard directly to `$GITHUB_STEP_SUMMARY`.
+| Area | Capabilities |
+| --- | --- |
+| Git metadata | Parse recent commit history and standard Git trailers such as `Co-authored-by:` |
+| Contributor analytics | Summarize primary author and co-author contributions from the inspected history |
+| Commit hygiene | Check commit subjects against the project's Conventional Commits validator |
+| GitHub Action | Run an audit in CI and publish a Markdown summary to the GitHub Actions step summary |
+| AI-assisted review | Produce a PR-oriented summary using the Anthropic API, an optional local CLI integration, or a deterministic heuristic fallback |
+| Repository insights | Query pull requests and reviews, inspect stargazer timestamps, and calculate star-velocity estimates |
+| Developer utilities | Generate co-author trailers, inspect achievement reference data, and export structured reports |
 
-Create `.github/workflows/activity-lab.yml`:
+## Quick start
+
+### Requirements
+
+- Python 3.9 or newer.
+- Git installed and available on `PATH` for local repository-history commands.
+- An Anthropic API key only when you want to call the Anthropic Messages API.
+
+### Install from source
+
+```bash
+git clone https://github.com/UmeshCode1/lets-connect.git
+cd lets-connect
+python -m pip install -e .
+```
+
+Check the available commands:
+
+```bash
+activity-lab --help
+```
+
+### Common CLI commands
+
+Run a local contribution summary:
+
+```bash
+activity-lab stats --repo . --limit 100
+```
+
+Inspect co-author trailers:
+
+```bash
+activity-lab check-trailers --repo . --limit 100
+```
+
+Check the achievement reference registry:
+
+```bash
+activity-lab milestones
+```
+
+Generate a correctly formatted co-author trailer:
+
+```bash
+activity-lab format-coauthor --name "Jane Doe" --email "jane@example.com"
+```
+
+Analyze repository star velocity (API access may be rate-limited without a token):
+
+```bash
+activity-lab star-velocity --owner OWNER --repo REPOSITORY
+```
+
+Inspect review participation:
+
+```bash
+activity-lab review-stats --owner OWNER --repo REPOSITORY --limit 50
+```
+
+Run the GitHub Actions audit locally:
+
+```bash
+activity-lab run-action --repo . --limit 50
+```
+
+Generate a PR-oriented review summary:
+
+```bash
+activity-lab ai-review --title "feat(api): add webhook endpoint" --body "Adds signed webhook handling."
+```
+
+The AI review command can use the Anthropic API when `ANTHROPIC_API_KEY` is available. If no API response is available, the implementation falls back to deterministic heuristic analysis. The heuristic fallback is not an LLM review and should not be treated as a security audit.
+
+## GitHub Actions
+
+The repository is published as a composite GitHub Action. Add a workflow such as `.github/workflows/activity-lab.yml` to the repository you want to inspect:
 
 ```yaml
-name: Contributor & Milestone Audit
+name: Activity Lab
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   audit:
@@ -35,118 +121,100 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run Activity Lab Audit
+      - name: Run GitHub Activity Lab
         uses: UmeshCode1/lets-connect@v1
         with:
-          repo-path: '.'
-          limit: '50'
-          ai-review: 'true'
+          repo-path: .
+          limit: "50"
+          enforce-coauthors: "false"
+          enforce-conventional: "false"
+          ai-review: "false"
+```
+
+Use a version tag or commit SHA appropriate to your release policy. The example uses `@v1`; confirm that the tag exists and points to the release you intend to consume before relying on it in production workflows.
+
+### Action inputs
+
+| Input | Description | Default |
+| --- | --- | --- |
+| `repo-path` | Path to the target Git repository | `.` |
+| `limit` | Maximum number of recent commits to inspect | `50` |
+| `enforce-coauthors` | Fail the action when no co-authored commits are found in the inspected history | `false` |
+| `enforce-conventional` | Fail the action when inspected commit subjects do not pass the project's validator | `false` |
+| `ai-review` | Enable the PR-summary/review path | `false` |
+| `pr-title` | Pull-request title supplied by the workflow | Empty |
+| `pr-body` | Pull-request body supplied by the workflow | Empty |
+| `anthropic-api-key` | Not currently declared as an action input; configure `ANTHROPIC_API_KEY` in the workflow environment if API-backed review is required | — |
+
+Example of supplying the API key safely through a GitHub Actions secret:
+
+```yaml
+      - name: Run GitHub Activity Lab
+        uses: UmeshCode1/lets-connect@v1
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        with:
+          ai-review: "true"
           pr-title: ${{ github.event.pull_request.title }}
           pr-body: ${{ github.event.pull_request.body }}
-          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
-### Action Configuration
+Only grant workflow permissions that the consuming workflow needs. The action's current CI workflow uses read-only repository contents permission.
 
-#### Inputs
-
-| Input | Description | Default | Required |
-|:------|:------------|:-------:|:--------:|
-| `repo-path` | Path to target git repository | `.` | No |
-| `limit` | Maximum number of commits to scan | `50` | No |
-| `enforce-coauthors` | Fail CI if no co-authored commits are found | `false` | No |
-| `enforce-conventional` | Fail CI if commit subjects violate Conventional Commits | `false` | No |
-| `ai-review` | Enable AI-assisted PR review & summary generation | `false` | No |
-| `pr-title` | Pull request title for automated review | `''` | No |
-| `pr-body` | Pull request description | `''` | No |
-| `anthropic-api-key` | Anthropic API Key for Claude models (optional) | `''` | No |
-
-#### Outputs
+### Action outputs
 
 | Output | Description |
-|:-------|:------------|
-| `total-commits` | Total commits analyzed in current run |
-| `co-authored-commits` | Number of commits containing verified co-authors |
-| `contributors-count` | Number of unique contributors detected |
-| `co-authored-percentage`| Ratio of co-authored commits to total commits |
-| `compliance-status` | Execution status (`success` or `failure`) |
+| --- | --- |
+| `total-commits` | Number of commits inspected |
+| `co-authored-commits` | Number of inspected commits containing co-author metadata |
+| `contributors-count` | Distinct contributors found in the inspected commit history |
+| `co-authored-percentage` | Percentage of inspected commits containing co-author metadata |
+| `compliance-status` | `success` or `failure` based on enabled enforcement options |
 
----
+## Development and tests
 
-## 🚀 Key Capabilities
+The project uses Python's standard library for its core implementation and `unittest` for automated tests.
 
-- **🔍 RFC Git Trailer Validation**: Accurately extracts and verifies `Co-authored-by: Name <email>` trailers following Git RFC specifications.
-- **🤖 Claude AI PR Reviewer**: Evaluates pull requests for semantic clarity, security risk levels (`LOW`, `MEDIUM`, `HIGH`), suggested co-authors, and commit hygiene using Claude 3.7 / 3.5 Sonnet (with resilient heuristic fallback).
-- **📊 Contributor & Pairing Analytics**: Quantifies individual author commits, co-authorship frequencies, and team collaboration ratios.
-- **🏆 Milestone Progression Tracking**: Tracks milestones toward official GitHub achievements (*Pair Extraordinaire*, *Pull Shark*, *Galaxy Brain*, *Starstruck*).
-- **📝 Automated Step Summaries**: Generates clean, formatted GitHub-flavored markdown tables in GitHub Actions.
-- **⚡ Zero External Dependencies**: Runs entirely on the Python standard library with 100% test coverage.
-
----
-
-## 💻 CLI Quickstart
-
-Install locally in editable mode:
+Run the test suite from the repository root:
 
 ```bash
-git clone https://github.com/UmeshCode1/lets-connect.git
-cd lets-connect
-pip install -e .
+PYTHONPATH=src python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
-### Common Commands
+The CI workflow runs the unit-test suite on Python 3.10, 3.11, 3.12, and 3.13. Test presence does not imply 100% statement or branch coverage; no measured coverage percentage is claimed here.
 
-* **Run CI/CD audit locally:**
-  ```bash
-  activity-lab run-action --repo . --limit 25
-  ```
+## Project layout
 
-* **Review PR with Claude AI:**
-  ```bash
-  activity-lab ai-review --title "feat(api): add webhook endpoint" --body "Implements HMAC verification"
-  ```
-
-* **Inspect contributor statistics:**
-  ```bash
-  activity-lab stats --repo . --limit 50
-  ```
-
-* **Verify commit trailers:**
-  ```bash
-  activity-lab check-trailers --repo .
-  ```
-
-* **Format a valid Co-authored-by trailer:**
-  ```bash
-  activity-lab format-coauthor --name "Jane Doe" --email "jane@example.com"
-  ```
-
-* **View GitHub Achievements & Tier Requirements:**
-  ```bash
-  activity-lab milestones
-  ```
-
----
-
-## 🧪 Testing
-
-Run the test suite:
-
-```bash
-python -m unittest discover -s tests -p "test_*.py" -v
+```text
+.
+├── .github/
+│   └── workflows/       # CI, action tests, and release workflow
+├── docs/                # Architecture, workflow, and achievement references
+├── src/activity_lab/    # Python package and CLI implementation
+├── tests/               # unittest suite
+├── action.yml           # GitHub composite action metadata
+├── pyproject.toml        # Packaging and CLI entry point
+├── CONTRIBUTING.md
+├── CODE_OF_CONDUCT.md
+└── LICENSE
 ```
 
----
+## Documentation
 
-## 📚 Documentation
+- [Architecture](docs/ARCHITECTURE.md)
+- [Achievement reference guide](docs/BADGES_GUIDE.md)
+- [Collaborative Git workflow](docs/WORKFLOW.md)
+- [Contributing guide](CONTRIBUTING.md)
+- [Security policy](.github/SECURITY.md)
 
-- [Architecture & Design](docs/ARCHITECTURE.md)
-- [GitHub Achievements Reference & Tiers](docs/BADGES_GUIDE.md)
-- [Collaborative Git Workflow](docs/WORKFLOW.md)
-- [Contributing Guidelines](CONTRIBUTING.md)
+## Open-source recognition
 
----
+The project is listed on the [XERJ Corpus Hub contributor page](https://hub.xerj.org/contributors/UmeshCode1). This is an external project index and recognition listing, not a measure of downloads, active users, or dependent projects.
 
-## 📄 License
+## Contributing
 
-This project is licensed under the [MIT License](LICENSE).
+Contributions, bug reports, and feature requests are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md), follow the [Code of Conduct](CODE_OF_CONDUCT.md), and include tests for code changes where practical.
+
+## License
+
+Distributed under the [MIT License](LICENSE).
