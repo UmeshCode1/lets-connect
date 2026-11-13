@@ -204,6 +204,7 @@ The CI workflow runs the unit-test suite on Python 3.10, 3.11, 3.12, and 3.13. T
 - [Achievement reference guide](docs/BADGES_GUIDE.md)
 - [Collaborative Git workflow](docs/WORKFLOW.md)
 - [Contributing guide](CONTRIBUTING.md)
+- [Project roadmap](docs/ROADMAP.md)
 - [Security policy](.github/SECURITY.md)
 
 ## Open-source recognition
