@@ -144,7 +144,7 @@ Use a version tag or commit SHA appropriate to your release policy. The example 
 | `ai-review` | Enable the PR-summary/review path | `false` |
 | `pr-title` | Pull-request title supplied by the workflow | Empty |
 | `pr-body` | Pull-request body supplied by the workflow | Empty |
-| `anthropic-api-key` | Not currently declared as an action input; configure `ANTHROPIC_API_KEY` in the workflow environment if API-backed review is required | — |
+| `anthropic-api-key` | Optional Anthropic API key used for Claude-backed PR review | Empty |
 
 Example of supplying the API key safely through a GitHub Actions secret:
 
